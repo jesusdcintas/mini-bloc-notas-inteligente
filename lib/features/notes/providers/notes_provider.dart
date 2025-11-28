@@ -39,4 +39,17 @@ class NotesNotifier extends AsyncNotifier<List<Note>> {
     state = const AsyncValue.loading();
     state = AsyncValue.data(await _repo.getNotes());
   }
+
+  /// Obtener una nota por ID (para edición)
+  Note? getNoteById(int id) {
+    final currentState = state;
+    if (currentState is AsyncData<List<Note>>) {
+      try {
+        return currentState.value.firstWhere((n) => n.id == id);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
 }

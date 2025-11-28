@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:mini_bloc_notas_inteligente/features/notes/presentation/pages/notes_list_page.dart';
+import '../config/theme.dart';
+import 'router.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+/// Widget principal de la aplicación
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      title: 'Mini Bloc de Notas Inteligente',
+      
+      // Configuración del tema
+      theme: AppTheme.lightTheme,
+      
+      // Configuración del router
+      routerConfig: router,
+      
+      // Ocultar banner de debug
       debugShowCheckedModeBanner: false,
-      title: 'Mini Bloc de Notas',
-      theme: ThemeData(
-        colorSchemeSeed: Colors.blue,
-        useMaterial3: true,
-      ),
-      home: const NotesListPage(),
     );
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mini_bloc_notas_inteligente/features/notes/providers/notes_provider.dart';
-import 'note_edit_page.dart';
+import 'package:go_router/go_router.dart';
+import '../../providers/notes_provider.dart';
+import '../widgets/note_item.dart';
 
+/// Pantalla principal que muestra la lista de notas
 class NotesListPage extends ConsumerWidget {
   const NotesListPage({super.key});
 
@@ -12,53 +14,113 @@ class NotesListPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mini Bloc de Notas"),
+        title: const Text('Mis Notas'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              ref.read(notesProvider.notifier).reloadNotes();
+            },
+            tooltip: 'Refrescar',
+          ),
+        ],
       ),
       body: notesState.when(
         data: (notes) {
           if (notes.isEmpty) {
-            return const Center(
-              child: Text("No hay notas aún"),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.note_add_outlined,
+                    size: 80,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '¡No hay notas todavía!',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.grey.shade600,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pulsa el botón + para crear tu primera nota',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey.shade500,
+                        ),
+                  ),
+                ],
+              ),
             );
           }
 
-          return ListView.builder(
-            itemCount: notes.length,
-            itemBuilder: (context, index) {
-              final note = notes[index];
-
-              return ListTile(
-                title: Text(note.title),
-                subtitle: Text(
-                  note.content,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => NoteEditPage(note: note),
-                    ),
-                  );
-                },
-              );
+          return RefreshIndicator(
+            onRefresh: () async {
+              await ref.read(notesProvider.notifier).reloadNotes();
             },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, st) => Center(child: Text("Error: $err")),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const NoteEditPage(),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: notes.length,
+              itemBuilder: (context, index) {
+                final note = notes[index];
+                return NoteItem(
+                  note: note,
+                  onTap: () => context.push('/note/${note.id}'),
+                  onDelete: () {
+                    ref.read(notesProvider.notifier).deleteNote(note.id!);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Nota "${note.title}" eliminada'),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           );
         },
-        child: const Icon(Icons.add),
+        loading: () => const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Cargando notas...'),
+            ],
+          ),
+        ),
+        error: (err, st) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red.shade300,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Error al cargar las notas',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text('$err'),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => ref.read(notesProvider.notifier).reloadNotes(),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/note/new'),
+        icon: const Icon(Icons.add),
+        label: const Text('Nueva Nota'),
       ),
     );
   }
