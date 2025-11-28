@@ -1,10 +1,26 @@
+import 'dart:io';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 
 class AppDatabase {
   static Database? _database;
+  static bool _initialized = false;
+
+  /// Inicializar SQLite para Windows/Linux/macOS
+  static void _initializeFfi() {
+    if (_initialized) return;
+    
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+    _initialized = true;
+  }
 
   static Future<Database> get database async {
+    _initializeFfi();
+    
     if (_database != null) return _database!;
 
     _database = await _initDB('notes.db');
