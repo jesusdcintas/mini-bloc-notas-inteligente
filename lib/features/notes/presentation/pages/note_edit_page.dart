@@ -8,7 +8,7 @@ import '../widgets/note_form.dart';
 
 /// Pantalla para crear o editar una nota
 class NoteEditPage extends ConsumerStatefulWidget {
-  /// ID de la nota a editar. Si es null, se crea una nueva nota.
+  /// ID de la nota a editar. Si es null o 'new', se crea una nueva nota.
   final String? noteId;
 
   const NoteEditPage({super.key, this.noteId});
@@ -41,7 +41,6 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
 
   void _loadNoteIfEditing() {
     if (_isEditing) {
-      // Cargar nota existente
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final noteId = int.tryParse(widget.noteId!);
         if (noteId != null) {
@@ -101,7 +100,6 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
             },
           ),
           actions: [
-            // Botón Guardar
             TextButton.icon(
               onPressed: _isLoading ? null : _saveNote,
               icon: _isLoading
@@ -135,7 +133,6 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
 
-    // Validación básica
     if (title.isEmpty && content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -149,19 +146,25 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
     setState(() => _isLoading = true);
 
     try {
+      final notifier = ref.read(notesProvider.notifier);
+      
       if (_isEditing && _existingNote != null) {
         // Actualizar nota existente
-        final updatedNote = _existingNote!.copyWith(
-          title: title.isEmpty ? 'Sin título' : title,
-          content: content,
+        await notifier.updateNote(
+          Note(
+            id: _existingNote!.id,
+            title: title.isEmpty ? 'Sin título' : title,
+            content: content,
+          ),
         );
-        await ref.read(notesProvider.notifier).updateNote(updatedNote);
       } else {
         // Crear nueva nota
-        await ref.read(notesProvider.notifier).createNote(
-              title.isEmpty ? 'Sin título' : title,
-              content,
-            );
+        await notifier.addNote(
+          Note(
+            title: title.isEmpty ? 'Sin título' : title,
+            content: content,
+          ),
+        );
       }
 
       if (mounted) {

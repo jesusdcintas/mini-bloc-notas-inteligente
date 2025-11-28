@@ -6,10 +6,8 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
   runApp(
-    // ProviderScope es necesario para que Riverpod funcione
     const ProviderScope(
       child: App(),
     ),
   );
 }
-
