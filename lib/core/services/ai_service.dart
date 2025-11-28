@@ -1,59 +1,111 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
-class AiService {
-	final String apiKey;
-	final http.Client _client;
+/// Servicio para interactuar con la API de IA (Google Gemini)
+/// 
+/// Para usar este servicio necesitas una API Key de Google AI Studio:
+/// https://aistudio.google.com/app/apikey
+class AIService {
+  // ⚠️ IMPORTANTE: Reemplaza esto con tu API Key de Gemini
+  // Puedes obtenerla gratis en: https://aistudio.google.com/app/apikey
+  static const String _apiKey = 'TU_API_KEY_AQUI';
+  
+  static const String _baseUrl = 
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
-	AiService({required this.apiKey, http.Client? client}) : _client = client ?? http.Client();
+  /// Resumir el texto de una nota
+  Future<String> summarizeText(String text) async {
+    if (_apiKey == 'TU_API_KEY_AQUI') {
+      // Modo demo si no hay API key configurada
+      return _demoSummarize(text);
+    }
 
-	  Uri _buildUri() => Uri.parse(
-		  'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$apiKey');
+    try {
+      final response = await _callGeminiAPI(
+        'Resume el siguiente texto de manera concisa, manteniendo las ideas principales. '
+        'El resumen debe ser breve pero informativo:\n\n$text',
+      );
+      return response;
+    } catch (e) {
+      throw Exception('Error al resumir el texto: $e');
+    }
+  }
 
-	Map<String, dynamic> _buildPayload(String promptPrefix, String text) {
-		final prompt = '$promptPrefix\n\n$text';
-		return {
-			'contents': [
-				{
-					'parts': [
-						{'text': prompt}
-					]
-				}
-			]
-		};
-	}
+  /// Mejorar el texto de una nota
+  Future<String> improveText(String text) async {
+    if (_apiKey == 'TU_API_KEY_AQUI') {
+      // Modo demo si no hay API key configurada
+      return _demoImprove(text);
+    }
 
-	Future<String> summarize(String text) async {
-		final payload = _buildPayload('Summarize the following text:', text);
-		return await _postAndExtract(payload);
-	}
+    try {
+      final response = await _callGeminiAPI(
+        'Mejora el siguiente texto corrigiendo errores gramaticales, '
+        'mejorando la redacción y haciéndolo más claro y profesional. '
+        'Mantén el mismo significado y tono:\n\n$text',
+      );
+      return response;
+    } catch (e) {
+      throw Exception('Error al mejorar el texto: $e');
+    }
+  }
 
-	Future<String> improve(String text) async {
-		final payload = _buildPayload('Improve the following text:', text);
-		return await _postAndExtract(payload);
-	}
+  /// Llamada a la API de Gemini
+  Future<String> _callGeminiAPI(String prompt) async {
+    final url = Uri.parse('$_baseUrl?key=$_apiKey');
+    
+    final body = jsonEncode({
+      'contents': [
+        {
+          'parts': [
+            {'text': prompt}
+          ]
+        }
+      ],
+      'generationConfig': {
+        'temperature': 0.7,
+        'maxOutputTokens': 1024,
+      },
+    });
 
-	Future<String> _postAndExtract(Map<String, dynamic> payload) async {
-		final uri = _buildUri();
-		final resp = await _client.post(uri,
-				headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload));
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: body,
+    );
 
-		if (resp.statusCode != 200 && resp.statusCode != 201) {
-			throw Exception('AI service error: ${resp.statusCode} ${resp.body}');
-		}
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final text = data['candidates'][0]['content']['parts'][0]['text'];
+      return text as String;
+    } else {
+      throw Exception('Error de API: ${response.statusCode} - ${response.body}');
+    }
+  }
 
-		final Map<String, dynamic> data = jsonDecode(resp.body) as Map<String, dynamic>;
+  /// Resumen en modo demo (sin API key)
+  String _demoSummarize(String text) {
+    if (text.length <= 100) {
+      return text;
+    }
+    // Simular un resumen simple
+    final words = text.split(' ');
+    final summaryWords = words.take((words.length * 0.4).ceil()).toList();
+    return '📝 RESUMEN (Demo):\n${summaryWords.join(' ')}...';
+  }
 
-		try {
-			final candidates = data['candidates'] as List<dynamic>;
-			final first = candidates.first as Map<String, dynamic>;
-			final content = first['content'] as Map<String, dynamic>;
-			final parts = content['parts'] as List<dynamic>;
-			final text = parts.first['text'] as String;
-			return text;
-		} catch (e) {
-			throw Exception('Unexpected AI response format: $e');
-		}
-	}
+  /// Mejora en modo demo (sin API key)
+  String _demoImprove(String text) {
+    // Simular una mejora simple
+    var improved = text;
+    
+    // Capitalizar primera letra de cada oración
+    improved = improved.replaceAllMapped(
+      RegExp(r'(^|[.!?]\s+)([a-z])'),
+      (match) => '${match.group(1)}${match.group(2)!.toUpperCase()}',
+    );
+    
+    return '✨ TEXTO MEJORADO (Demo):\n$improved\n\n'
+        '💡 Nota: Configura tu API Key de Gemini para obtener mejoras reales con IA.';
+  }
 }
