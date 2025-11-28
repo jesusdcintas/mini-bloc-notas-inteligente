@@ -1,99 +1,175 @@
 import 'package:flutter/material.dart';
 import '../../../../core/models/note.dart';
+import '../../../../config/theme.dart';
 
 /// Widget que muestra una nota individual en la lista
 class NoteItem extends StatelessWidget {
   final Note note;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final int index;
 
   const NoteItem({
     super.key,
     required this.note,
     required this.onTap,
     required this.onDelete,
+    this.index = 0,
   });
+
+  // Obtener color basado en el índice
+  Color get cardColor => AppTheme.noteColors[index % AppTheme.noteColors.length];
+
+  // Obtener icono basado en el índice
+  IconData get noteIcon {
+    const icons = [
+      Icons.sticky_note_2_rounded,
+      Icons.lightbulb_rounded,
+      Icons.star_rounded,
+      Icons.favorite_rounded,
+      Icons.bookmark_rounded,
+      Icons.auto_awesome_rounded,
+    ];
+    return icons[index % icons.length];
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Fila con título y botón de eliminar
-              Row(
-                children: [
-                  // Icono de nota
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withAlpha(26),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.note_outlined,
-                      color: Theme.of(context).colorScheme.primary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Título
-                  Expanded(
-                    child: Text(
-                      note.title.isEmpty ? 'Sin título' : note.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [cardColor, cardColor.withAlpha(180)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: cardColor.withAlpha(100),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Fila con título y botón de eliminar
+                Row(
+                  children: [
+                    // Icono de nota con fondo
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(180),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(15),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                        ],
+                      ),
+                      child: Icon(
+                        noteIcon,
+                        color: AppTheme.primaryColor,
+                        size: 22,
+                      ),
                     ),
-                  ),
-                  // Botón eliminar
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.red.shade400,
-                    onPressed: () => _showDeleteConfirmation(context),
-                    tooltip: 'Eliminar nota',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Contenido (preview)
-              Text(
-                note.content.isEmpty ? 'Sin contenido' : note.content,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
+                    const SizedBox(width: 14),
+                    // Título
+                    Expanded(
+                      child: Text(
+                        note.title.isEmpty ? 'Sin título' : note.title,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1F2937),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              // Indicador de "Toca para editar"
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(
-                    Icons.touch_app_outlined,
-                    size: 14,
-                    color: Colors.grey.shade400,
+                    // Botón eliminar con fondo
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.delete_rounded),
+                        color: Colors.red.shade400,
+                        iconSize: 22,
+                        onPressed: () => _showDeleteConfirmation(context),
+                        tooltip: 'Eliminar nota',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Contenido (preview) con fondo semitransparente
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(150),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Toca para editar',
+                  child: Text(
+                    note.content.isEmpty ? 'Sin contenido' : note.content,
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                      color: Colors.grey.shade700,
+                      height: 1.4,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 12),
+                // Indicador de "Toca para editar"
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(180),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.edit_rounded,
+                            size: 14,
+                            color: AppTheme.primaryColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Editar',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -105,19 +181,45 @@ class NoteItem extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Eliminar nota'),
-        content: Text('¿Estás seguro de que quieres eliminar "${note.title}"?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.warning_rounded, color: Colors.red.shade400),
+            ),
+            const SizedBox(width: 12),
+            const Text('Eliminar nota'),
+          ],
+        ),
+        content: Text(
+          '¿Estás seguro de que quieres eliminar "${note.title.isEmpty ? "esta nota" : note.title}"?',
+          style: const TextStyle(fontSize: 15),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               onDelete();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade400,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Eliminar'),
           ),
         ],

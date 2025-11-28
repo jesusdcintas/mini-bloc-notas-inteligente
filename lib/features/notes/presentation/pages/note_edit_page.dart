@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../config/theme.dart';
 import '../../../../core/models/note.dart';
 import '../../../../core/services/ai_service.dart';
 import '../../providers/notes_provider.dart';
@@ -85,43 +86,109 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(_isEditing ? 'Editar Nota' : 'Nueva Nota'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () async {
-              if (_hasChanges) {
-                final shouldPop = await _showDiscardDialog();
-                if (shouldPop && context.mounted) {
+          title: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(50),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _isEditing ? Icons.edit_rounded : Icons.add_circle_rounded,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(_isEditing ? 'Editar Nota' : 'Nueva Nota'),
+            ],
+          ),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+            ),
+          ),
+          leading: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(40),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () async {
+                if (_hasChanges) {
+                  final shouldPop = await _showDiscardDialog();
+                  if (shouldPop && context.mounted) {
+                    context.pop();
+                  }
+                } else {
                   context.pop();
                 }
-              } else {
-                context.pop();
-              }
-            },
+              },
+            ),
           ),
           actions: [
-            TextButton.icon(
-              onPressed: _isLoading ? null : _saveNote,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.save),
-              label: const Text('Guardar'),
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: _isLoading 
+                    ? Colors.white.withAlpha(30) 
+                    : AppTheme.tertiaryColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: _isLoading ? null : [
+                  BoxShadow(
+                    color: AppTheme.tertiaryColor.withAlpha(100),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextButton.icon(
+                onPressed: _isLoading ? null : _saveNote,
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white70),
+                        ),
+                      )
+                    : const Icon(Icons.save_rounded, color: Colors.white),
+                label: Text(
+                  'Guardar',
+                  style: TextStyle(
+                    color: _isLoading ? Colors.white70 : Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: NoteForm(
-            titleController: _titleController,
-            contentController: _contentController,
-            isLoading: _isLoading,
-            isAILoading: _isAILoading,
-            onSummarize: _summarizeText,
-            onImprove: _improveText,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.backgroundColor,
+                Colors.white,
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: NoteForm(
+              titleController: _titleController,
+              contentController: _contentController,
+              isLoading: _isLoading,
+              isAILoading: _isAILoading,
+              onSummarize: _summarizeText,
+              onImprove: _improveText,
+            ),
           ),
         ),
       ),
@@ -135,9 +202,15 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
 
     if (title.isEmpty && content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('La nota debe tener título o contenido'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.warning_rounded, color: Colors.white),
+              const SizedBox(width: 10),
+              const Text('La nota debe tener título o contenido'),
+            ],
+          ),
+          backgroundColor: AppTheme.tertiaryColor,
         ),
       );
       return;
@@ -170,8 +243,14 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_isEditing ? 'Nota actualizada' : 'Nota creada'),
-            backgroundColor: Colors.green,
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Text(_isEditing ? '¡Nota actualizada!' : '¡Nota creada!'),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
           ),
         );
         setState(() => _hasChanges = false);
@@ -181,8 +260,14 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                const Icon(Icons.error_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Text('Error: $e'),
+              ],
+            ),
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -199,9 +284,15 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
     
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Escribe algo para resumir'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_rounded, color: Colors.white),
+              const SizedBox(width: 10),
+              const Text('Escribe algo para resumir'),
+            ],
+          ),
+          backgroundColor: AppTheme.tertiaryColor,
         ),
       );
       return;
@@ -215,9 +306,15 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✨ Texto resumido'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                const Text('✨ Texto resumido con IA'),
+              ],
+            ),
+            backgroundColor: AppTheme.secondaryColor,
           ),
         );
       }
@@ -225,8 +322,14 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al resumir: $e'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                const Icon(Icons.error_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Text('Error al resumir: $e'),
+              ],
+            ),
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -243,9 +346,15 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
     
     if (content.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Escribe algo para mejorar'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.info_rounded, color: Colors.white),
+              const SizedBox(width: 10),
+              const Text('Escribe algo para mejorar'),
+            ],
+          ),
+          backgroundColor: AppTheme.tertiaryColor,
         ),
       );
       return;
@@ -259,9 +368,15 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✨ Texto mejorado'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                const Text('✨ Texto mejorado con IA'),
+              ],
+            ),
+            backgroundColor: AppTheme.accentGreen,
           ),
         );
       }
@@ -269,8 +384,14 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al mejorar: $e'),
-            backgroundColor: Colors.red,
+            content: Row(
+              children: [
+                const Icon(Icons.error_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Text('Error al mejorar: $e'),
+              ],
+            ),
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -286,16 +407,42 @@ class _NoteEditPageState extends ConsumerState<NoteEditPage> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('¿Descartar cambios?'),
-        content: const Text('Tienes cambios sin guardar. ¿Quieres descartarlos?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.tertiaryColor.withAlpha(40),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.warning_rounded, color: AppTheme.tertiaryColor),
+            ),
+            const SizedBox(width: 12),
+            const Text('¿Descartar cambios?'),
+          ],
+        ),
+        content: const Text(
+          'Tienes cambios sin guardar. ¿Quieres descartarlos?',
+          style: TextStyle(fontSize: 15),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: const Text('Descartar'),
           ),
         ],

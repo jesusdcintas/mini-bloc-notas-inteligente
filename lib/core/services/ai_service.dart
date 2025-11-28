@@ -8,10 +8,10 @@ import 'package:http/http.dart' as http;
 class AIService {
   // ⚠️ IMPORTANTE: Reemplaza esto con tu API Key de Gemini
   // Puedes obtenerla gratis en: https://aistudio.google.com/app/apikey
-  static const String _apiKey = 'TU_API_KEY_AQUI';
+  static const String _apiKey = 'AIzaSyBex2JwgbIqV-xPqn6NjUtBebcgsF4y97M';
   
   static const String _baseUrl = 
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
   /// Resumir el texto de una nota
   Future<String> summarizeText(String text) async {
