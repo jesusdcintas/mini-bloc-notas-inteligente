@@ -1,0 +1,1 @@
+# mini-bloc-notas-inteligente
